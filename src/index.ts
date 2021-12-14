@@ -1,6 +1,6 @@
 import express from 'express';
-import { CreateUserDto, GetUserParamsDto } from './dto';
-import { bodyValidator, paramValidator } from './middleware';
+import { CreateUserDto, GetUserByQueryDto, GetUserParamsDto } from './dto';
+import { bodyValidator, paramValidator, queryValidator } from './middleware';
 
 const app = express();
 
@@ -16,6 +16,23 @@ app.get('/user/:id', paramValidator(GetUserParamsDto), (req, res) => {
   } else {
     res.status(404).json({ errorCode: 'NOT_FOUND' });
   }
+});
+
+app.get('/user', queryValidator(GetUserByQueryDto), (req, res) => {
+  const query = req.validatedQuery as GetUserByQueryDto;
+  if (query.password !== 'PASSWORD') {
+    return res.status(403).json({ errorCode: 'FORBIDDEN' });
+  }
+
+  res.json(Object.values(EXAMPLE_DB).filter((u: any) => {
+    if (query.id === u.id) {
+      return true;
+    }
+    if (query.name && u.name.includes(query.name)) {
+      return true;
+    }
+    return false;
+  }));
 });
 
 app.post('/user', bodyValidator(CreateUserDto), (req, res) => {
